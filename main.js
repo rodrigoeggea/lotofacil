@@ -366,12 +366,17 @@ function highlightPerfectMatch(rank) {
   const x = pixelIndex % canvas.width;
   const y = Math.floor(pixelIndex / canvas.width);
 
-  perfectContext.strokeStyle = '#18252b';
+  const centerX = x + 0.5;
+  const centerY = y + 0.5;
+
+  perfectContext.strokeStyle = '#000000';
   perfectContext.lineWidth = 2;
-  perfectContext.strokeRect(x - 4.5, y - 4.5, 10, 10);
-  perfectContext.strokeStyle = '#ffffff';
-  perfectContext.lineWidth = 1;
-  perfectContext.strokeRect(x - 2.5, y - 2.5, 6, 6);
+  perfectContext.beginPath();
+  perfectContext.moveTo(centerX - 5, centerY);
+  perfectContext.lineTo(centerX + 5, centerY);
+  perfectContext.moveTo(centerX, centerY - 5);
+  perfectContext.lineTo(centerX, centerY + 5);
+  perfectContext.stroke();
 }
 
 function generateDrawMatches(drawNumbers) {
@@ -570,11 +575,32 @@ function exportSelectionCsv() {
     return;
   }
 
+  const generatedAt = new Date();
+  const year = String(generatedAt.getFullYear());
+  const month = String(generatedAt.getMonth() + 1).padStart(2, '0');
+  const day = String(generatedAt.getDate()).padStart(2, '0');
+  const hour = String(generatedAt.getHours()).padStart(2, '0');
+  const minute = String(generatedAt.getMinutes()).padStart(2, '0');
+  const second = String(generatedAt.getSeconds()).padStart(2, '0');
+  const timestamp = `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+  const firstCard = getResultAt(resultRankAtPixel(bounds.top * canvas.width + bounds.left));
+  const lastCard = getResultAt(resultRankAtPixel(bounds.bottom * canvas.width + bounds.right));
+  const totalCards = (bounds.right - bounds.left + 1) * (bounds.bottom - bounds.top + 1);
+  const metadata = [
+    ['Data da geração', timestamp],
+    ['Resultado'],
+    currentDrawNumbers.map((number) => String(number).padStart(2, '0')),
+    ['Cartão inicial'],
+    firstCard.map((number) => String(number).padStart(2, '0')),
+    ['Cartão final'],
+    lastCard.map((number) => String(number).padStart(2, '0')),
+    ['Quantidade de cartões:', totalCards]
+  ].map((row) => row.join(';')).join('\r\n');
   const header = Array.from(
     { length: numbersPerResult },
     (_, index) => `Dezena${String(index + 1).padStart(2, '0')}`
   ).join(';');
-  const chunks = ['\uFEFF', `${header}\r\n`];
+  const chunks = ['\uFEFF', `${metadata}\r\n`, `${header}\r\n`];
   let rows = [];
 
   for (let y = bounds.top; y <= bounds.bottom; y += 1) {
@@ -595,7 +621,7 @@ function exportSelectionCsv() {
   const url = URL.createObjectURL(file);
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'cartoes-selecionados.csv';
+  link.download = `${year}${month}${day}-${hour}${minute}${second}-lotofacil.csv`;
   document.body.append(link);
   link.click();
   link.remove();
@@ -684,7 +710,7 @@ function showResult(event) {
   const rank = resultRankAtPixel(pixelIndex);
   const result = getResultAt(rank);
 
-  positionLabel.textContent = `Resultado ${numberFormatter.format(rank + 1)} de ${numberFormatter.format(resultCount)}`;
+  positionLabel.textContent = `Cartão ${numberFormatter.format(rank + 1)} de ${numberFormatter.format(resultCount)}`;
   numbersLabel.textContent = result.map((number) => String(number).padStart(2, '0')).join(' ');
 
   if (currentDrawNumbers === null) {
@@ -701,6 +727,7 @@ function showResult(event) {
     scoreLabel.dataset.tier = String(tier);
   }
 
+  popup.dataset.tier = scoreLabel.dataset.tier;
   popup.hidden = false;
 
   const left = Math.min(event.clientX + 14, window.innerWidth - popup.offsetWidth - 8);
@@ -732,7 +759,7 @@ searchForm.addEventListener('submit', (event) => {
   }
 
   const scoreText = score === '' ? '' : ` ${score}.`;
-  searchStatus.textContent = `Resultado ${numberFormatter.format(rank + 1)} destacado no canvas.${scoreText}`;
+  searchStatus.textContent = `Cartão ${numberFormatter.format(rank + 1)} destacado no canvas.${scoreText}`;
   popup.hidden = true;
 
   const bounds = canvas.getBoundingClientRect();
