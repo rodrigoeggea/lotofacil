@@ -15,6 +15,7 @@ Não é necessário instalar dependências nem compilar o projeto. Abra `index.h
 - **Selecionar região:** clique e arraste com o botão esquerdo sobre o canvas. Ao soltar, o resumo mostra quantos cartões da área estão em cada faixa de pontuação.
 - **Prêmios:** o resumo calcula os valores fixos de 11, 12 e 13 acertos e permite editar os prêmios por cartão de 14 e 15 acertos. O total é atualizado automaticamente.
 - **Ver cartões:** no resumo da seleção, clique em **Ver cartões** para abrir a lista das combinações incluídas. A lista é paginada em grupos de até 100 cartões.
+- **Exportar XLS:** no resumo da seleção, exporte os cartões como arquivo Excel 97–2003. Seleções grandes são divididas em abas para respeitar o limite do formato.
 
 A faixa de **0 pontos** representa cartões sem prêmio, isto é, com menos de 11 acertos. Como o cartão e o sorteio têm 15 dezenas em um universo de 25, zero acertos reais não é possível; o mínimo é 5.
 
@@ -29,3 +30,5 @@ A ordem é lexicográfica, da esquerda para a direita e de cima para baixo: o pr
 - `index.html`: estrutura da página e formulários.
 - `style.css`: layout, cores e apresentação dos diálogos.
 - `main.js`: combinações, mapeamento do canvas, busca, pintura e seleção.
+- `vendor/xlsx.full.min.js`: biblioteca local para gerar arquivos XLS binários.
+- `vendor/LICENSE.txt`: licença Apache 2.0 do SheetJS.

@@ -42,7 +42,7 @@ const selectionPrize14 = document.getElementById('selection-prize-14');
 const selectionPrize15 = document.getElementById('selection-prize-15');
 const selectionPrizeTotal = document.getElementById('selection-prize-total');
 const showSelectionCardsButton = document.getElementById('show-selection-cards');
-const exportSelectionCsvButton = document.getElementById('export-selection-csv');
+const exportSelectionXlsButton = document.getElementById('export-selection-xls');
 const selectionCardsDialog = document.getElementById('selection-cards-dialog');
 const selectionPageLabel = document.getElementById('selection-page-label');
 const selectionCardList = document.getElementById('selection-card-list');
@@ -568,7 +568,7 @@ function renderSelectionCardsPage() {
   selectionNextButton.disabled = end >= total;
 }
 
-function exportSelectionCsv() {
+function exportSelectionXls() {
   const bounds = currentSelectionBounds;
 
   if (bounds === null) {
@@ -595,37 +595,42 @@ function exportSelectionCsv() {
     ['Cartão final'],
     lastCard.map((number) => String(number).padStart(2, '0')),
     ['Quantidade de cartões:', totalCards]
-  ].map((row) => row.join(';')).join('\r\n');
+  ];
   const header = Array.from(
     { length: numbersPerResult },
     (_, index) => `Dezena${String(index + 1).padStart(2, '0')}`
-  ).join(';');
-  const chunks = ['\uFEFF', `${metadata}\r\n`, `${header}\r\n`];
-  let rows = [];
+  );
+  const workbook = XLSX.utils.book_new();
+  let sheetNumber = 1;
+  let rows = [...metadata, header];
+
+  function appendSheet() {
+    const worksheet = XLSX.utils.aoa_to_sheet(rows);
+    const sheetName = sheetNumber === 1 ? 'Cartoes' : `Cartoes_${sheetNumber}`;
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+    sheetNumber += 1;
+    rows = [header];
+  }
 
   for (let y = bounds.top; y <= bounds.bottom; y += 1) {
     for (let x = bounds.left; x <= bounds.right; x += 1) {
       const rank = resultRankAtPixel(y * canvas.width + x);
       const result = getResultAt(rank);
-      rows.push(`${result.map((number) => String(number).padStart(2, '0')).join(';')}\r\n`);
+      rows.push(result.map((number) => String(number).padStart(2, '0')));
 
-      if (rows.length === 10000) {
-        chunks.push(rows.join(''));
-        rows = [];
+      if (rows.length === 65536) {
+        appendSheet();
       }
     }
   }
 
-  chunks.push(rows.join(''));
-  const file = new Blob(chunks, { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(file);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `${year}${month}${day}-${hour}${minute}${second}-lotofacil.csv`;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  if (rows.length > 1 || sheetNumber === 1) {
+    appendSheet();
+  }
+
+  XLSX.writeFile(workbook, `${year}${month}${day}-${hour}${minute}${second}-lotofacil.xls`, {
+    bookType: 'biff8'
+  });
 }
 
 function openSelectionCards() {
@@ -811,7 +816,7 @@ openSelectionButton.addEventListener('click', () => {
   }
 });
 showSelectionCardsButton.addEventListener('click', openSelectionCards);
-exportSelectionCsvButton.addEventListener('click', exportSelectionCsv);
+exportSelectionXlsButton.addEventListener('click', exportSelectionXls);
 selectionPreviousButton.addEventListener('click', goToPreviousSelectionPage);
 selectionNextButton.addEventListener('click', goToNextSelectionPage);
 selectionPrize14.addEventListener('input', updateSelectionPrizeTotal);
