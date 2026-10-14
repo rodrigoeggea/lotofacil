@@ -210,6 +210,10 @@ body {
   font: 13px/1.4 system-ui, sans-serif;
 }
 
+.hit-filter-option--none {
+  padding-left: 44px;
+}
+
 .hit-filter-option input {
   width: 16px;
   height: 16px;
@@ -380,6 +384,26 @@ body {
   border-top: 1px solid #cbd3d5;
   color: #18252b !important;
   font-weight: 700 !important;
+}
+
+.selection-prize-total__value {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  text-align: right;
+}
+
+.selection-prize-total__value span:last-child {
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+#selection-prize-total[data-result="above-cost"] {
+  color: #1565c0;
+}
+
+#selection-prize-total[data-result="below-cost"] {
+  color: #c62828;
 }
 
 @media (max-width: 460px) {

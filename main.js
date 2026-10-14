@@ -26,6 +26,7 @@ const hitFilterDialog = document.getElementById('hit-filter-dialog');
 const hitFilterForm = document.getElementById('hit-filter-form');
 const hitFilterAll = document.getElementById('hit-filter-all');
 const hitFilterInputs = [...document.querySelectorAll('.hit-filter-tier')];
+const noHitFilterCount = document.getElementById('hit-filter-count-none');
 const cancelHitFilterButton = document.getElementById('cancel-hit-filter');
 const validationDialog = document.getElementById('validation-dialog');
 const validationMessage = document.getElementById('validation-message');
@@ -41,6 +42,8 @@ const selectionTierPrizeTotals = new Map(
 const selectionPrize14 = document.getElementById('selection-prize-14');
 const selectionPrize15 = document.getElementById('selection-prize-15');
 const selectionPrizeTotal = document.getElementById('selection-prize-total');
+const selectionPrizeAmount = document.getElementById('selection-prize-amount');
+const selectionPrizeMultiple = document.getElementById('selection-prize-multiple');
 const showSelectionCardsButton = document.getElementById('show-selection-cards');
 const exportSelectionXlsButton = document.getElementById('export-selection-xls');
 const selectionCardsDialog = document.getElementById('selection-cards-dialog');
@@ -119,7 +122,16 @@ function combinationCount(total, selected) {
 const resultCount = combinationCount(numberCount, numbersPerResult);
 let pixelCount = canvas.width * canvas.height;
 const numberFormatter = new Intl.NumberFormat('pt-BR');
+const noHitCardCount = resultCount - allHitTiers.reduce(
+  (total, hits) => total + combinationCount(numbersPerResult, hits)
+    * combinationCount(numberCount - numbersPerResult, numbersPerResult - hits),
+  0
+);
 const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const multipleFormatter = new Intl.NumberFormat('pt-BR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
 const ticketPrice = 3.5;
 let matchByPixel = new Uint8Array(pixelCount);
 const selectionPageSize = 100;
@@ -131,6 +143,8 @@ let currentSelectionCounts = null;
 let selectionPageStarts = [0];
 let currentSelectionPage = 0;
 let selectionNextOffset = 0;
+
+noHitFilterCount.textContent = numberFormatter.format(noHitCardCount);
 
 context.fillStyle = '#ffffff';
 context.fillRect(0, 0, canvas.width, canvas.height);
@@ -538,7 +552,18 @@ function updateSelectionPrizeTotal() {
     totalPrize += tierTotal;
   }
 
-  selectionPrizeTotal.textContent = currencyFormatter.format(totalPrize);
+  const selectedCards = [...currentSelectionCounts.values()].reduce((total, count) => total + count, 0);
+  const selectionCostTotal = selectedCards * ticketPrice;
+  const prizeMultiple = selectionCostTotal > 0
+    ? multipleFormatter.format(totalPrize / selectionCostTotal)
+    : multipleFormatter.format(0);
+  selectionPrizeTotal.dataset.result = totalPrize > selectionCostTotal
+    ? 'above-cost'
+    : totalPrize < selectionCostTotal
+      ? 'below-cost'
+      : 'equal-cost';
+  selectionPrizeAmount.textContent = currencyFormatter.format(totalPrize);
+  selectionPrizeMultiple.textContent = `(${prizeMultiple} x)`;
 }
 
 function renderSelectionCardsPage() {
